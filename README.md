@@ -56,7 +56,6 @@ AGORA_CUSTOMER_SECRET=your_customer_secret
 cd tf-agora-app
 cp .env.example .env.local   # or create manually
 npm install
-npm start
 ```
 
 `.env.local`:
@@ -65,7 +64,10 @@ EXPO_PUBLIC_AGORA_APP_ID=your_app_id
 EXPO_PUBLIC_STT_SERVER_URL=http://<stt_server_ip>:3000
 ```
 
-Then choose a platform from the Expo dev menu (`i` for iOS, `a` for Android, `w` for web).
+```bash
+npm run ios      # iOS simulator
+npm run android  # Android emulator
+```
 
 ## STT Server API
 
