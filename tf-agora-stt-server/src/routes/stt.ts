@@ -4,6 +4,9 @@ import { startSttTask, querySttTask, stopSttTask } from "../services/agora-stt";
 
 const router = Router();
 
+// channelName → agentId; prevents duplicate bots when multiple clients call /start concurrently
+const activeSessions = new Map<string, string>();
+
 function handleError(err: unknown, res: Response) {
   if (axios.isAxiosError(err)) {
     res.status(err.response?.status ?? 502).json({
@@ -24,8 +27,15 @@ router.post("/start", async (req: Request, res: Response) => {
     return;
   }
 
+  const existingAgentId = activeSessions.get(channelName);
+  if (existingAgentId) {
+    res.json({ agentId: existingAgentId });
+    return;
+  }
+
   try {
     const agent = await startSttTask({ channelName, pubBotUid, pubBotToken, languages, translateLanguages });
+    activeSessions.set(channelName, agent.agentId);
     res.json(agent);
   } catch (err) {
     handleError(err, res);
@@ -50,6 +60,9 @@ router.post<{ agentId: string }>("/stop/:agentId", async (req, res) => {
 
   try {
     await stopSttTask(agentId);
+    for (const [channel, id] of activeSessions) {
+      if (id === agentId) { activeSessions.delete(channel); break; }
+    }
     res.json({ success: true });
   } catch (err) {
     handleError(err, res);

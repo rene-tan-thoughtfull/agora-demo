@@ -9,7 +9,21 @@
     "userInterfaceStyle": "automatic",
     "ios": {
       "icon": "./assets/expo.icon",
-      "bundleIdentifier": "world.thoughtfull.provider.staging"
+      "bundleIdentifier": "world.thoughtfull.provider.staging",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Camera access is required for video calls.",
+        "NSMicrophoneUsageDescription": "Microphone access is required for video calls.",
+        "NSAppTransportSecurity": {
+          "NSAllowsArbitraryLoads": false,
+          "NSAllowsLocalNetworking": true,
+          "NSExceptionDomains": {
+            "192.168.1.195": {
+              "NSExceptionAllowsInsecureHTTPLoads": true,
+              "NSIncludesSubdomains": false
+            }
+          }
+        }
+      }
     },
     "android": {
       "package": "world.thoughtfull.provider.staging",

@@ -28,7 +28,7 @@ import { Colors, Spacing } from '@/constants/theme';
 
 const AGORA_APP_ID = process.env.EXPO_PUBLIC_AGORA_APP_ID ?? '';
 // const STT_SERVER_URL = process.env.EXPO_PUBLIC_STT_SERVER_URL ?? 'http://localhost:3000';
-const STT_SERVER_URL = "http://192.168.68.107:3000";
+const STT_SERVER_URL = "http://192.168.1.195:3000";
 
 async function requestAndroidPermissions(): Promise<boolean> {
   if (Platform.OS !== 'android') return true;
@@ -134,8 +134,8 @@ export default function VideoCallScreen() {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme === 'dark' ? 'dark' : 'light'];
 
-  const [channel, setChannel] = useState('');
-  const [token, setToken] = useState('');
+  const [channel, setChannel] = useState('my');
+  const [token, setToken] = useState('007eJxTYMi7va/v1qu+8s2SkhvjZR26lA59fCh5w3L5xsmF+7czX1ipwJCSZpGcapZsbGlhbm5iZGxmmWxhaWyabGyQmJSWapJq5mb9IrMhkJFBpPkiMyMDBIL4TAy5lQwMAJ2VIFI=');
   const [uid, setUid] = useState('0');
 
   const [isJoined, setIsJoined] = useState(false);
@@ -212,16 +212,15 @@ export default function VideoCallScreen() {
     const handler: IRtcEngineEventHandler = {
       onJoinChannelSuccess: () => {
         setIsJoined(true);
-        startStt(channel.trim(), uid.trim() || '0', token.trim() || undefined);
+        startStt(channel.trim(), '999', token.trim() || undefined);
       },
       onUserJoined: (_conn, remoteUid) => setRemoteUids(prev => [...prev, remoteUid]),
       onUserOffline: (_conn, remoteUid) =>
         setRemoteUids(prev => prev.filter(u => u !== remoteUid)),
       onStreamMessage: (_conn, _remoteUid, _streamId, data) => {
         console.info('Received STT raw bytes:', data)
-        console.info('Received STT as chars:', String.fromCharCode.apply(null, Array.from(data)))
         const msg = parseSttMessage(data);
-        console.info('Received STT message 1111: ', msg)
+        console.info('Received STT message: ', msg)
         if (!msg) return;
         const finals = msg.words.filter(w => w.isFinal).map(w => w.text).join(' ').trim();
         const interim = msg.words.filter(w => !w.isFinal).map(w => w.text).join(' ').trim();
@@ -300,32 +299,34 @@ export default function VideoCallScreen() {
           zOrderMediaOverlay
         />
 
-        {(finalCaption.length > 0 || interimCaption.length > 0) && (
-          <View style={styles.captionContainer}>
-            {finalCaption.length > 0 && (
-              <Text style={styles.captionText}>{finalCaption}</Text>
-            )}
-            {interimCaption.length > 0 && (
-              <Text style={[styles.captionText, styles.captionInterim]}>{interimCaption}</Text>
-            )}
-          </View>
-        )}
+        <View style={styles.bottomOverlay}>
+          {(finalCaption.length > 0 || interimCaption.length > 0) && (
+            <View style={styles.captionContainer}>
+              {finalCaption.length > 0 && (
+                <Text style={styles.captionText}>{finalCaption}</Text>
+              )}
+              {interimCaption.length > 0 && (
+                <Text style={[styles.captionText, styles.captionInterim]}>{interimCaption}</Text>
+              )}
+            </View>
+          )}
 
-        <SafeAreaView edges={['bottom']} style={styles.controlsBar}>
-          <Pressable
-            style={[styles.ctrlBtn, isMuted && styles.ctrlBtnActive]}
-            onPress={toggleMute}>
-            <Text style={styles.ctrlLabel}>{isMuted ? 'Unmute' : 'Mute'}</Text>
-          </Pressable>
-          <Pressable style={[styles.ctrlBtn, styles.endBtn]} onPress={leaveCall}>
-            <Text style={[styles.ctrlLabel, styles.endLabel]}>End</Text>
-          </Pressable>
-          <Pressable
-            style={[styles.ctrlBtn, isCameraOff && styles.ctrlBtnActive]}
-            onPress={toggleCamera}>
-            <Text style={styles.ctrlLabel}>{isCameraOff ? 'Cam On' : 'Cam Off'}</Text>
-          </Pressable>
-        </SafeAreaView>
+          <SafeAreaView edges={['bottom']} style={styles.controlsBar}>
+            <Pressable
+              style={[styles.ctrlBtn, isMuted && styles.ctrlBtnActive]}
+              onPress={toggleMute}>
+              <Text style={styles.ctrlLabel}>{isMuted ? 'Unmute' : 'Mute'}</Text>
+            </Pressable>
+            <Pressable style={[styles.ctrlBtn, styles.endBtn]} onPress={leaveCall}>
+              <Text style={[styles.ctrlLabel, styles.endLabel]}>End</Text>
+            </Pressable>
+            <Pressable
+              style={[styles.ctrlBtn, isCameraOff && styles.ctrlBtnActive]}
+              onPress={toggleCamera}>
+              <Text style={styles.ctrlLabel}>{isCameraOff ? 'Cam On' : 'Cam Off'}</Text>
+            </Pressable>
+          </SafeAreaView>
+        </View>
       </View>
     );
   }
@@ -443,11 +444,15 @@ const styles = StyleSheet.create({
     height: 150,
     borderRadius: 8,
   },
-  captionContainer: {
+  bottomOverlay: {
     position: 'absolute',
-    bottom: 100,
-    left: 16,
-    right: 16,
+    bottom: 0,
+    left: 0,
+    right: 0,
+  },
+  captionContainer: {
+    marginHorizontal: 16,
+    marginBottom: 8,
     backgroundColor: 'rgba(0,0,0,0.6)',
     borderRadius: 8,
     paddingHorizontal: 12,
@@ -464,10 +469,6 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
   },
   controlsBar: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
